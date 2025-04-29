@@ -1,14 +1,54 @@
+import { useEffect, useState } from "react";
+
+interface Agendamento {
+  id: string;
+  cliente: string;
+  servico: string;
+  valor: number;
+  data: string;
+  hora: string;
+  profissional: string;
+  status: "PENDENTE" | "CONCLUÍDO" | "CANCELADO";
+}
+
+interface Financeiro {
+  id: string;
+  descricao: string;
+  tipo: string;
+  valor: string;
+  categoria: string;
+  status: "Entrada" | "Saída";
+}
+
 export default function Home() {
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [financeiro, setFinanceiro] = useState<Financeiro[]>([]);
+
+  useEffect(() => {
+    const dadosAgendamentos = JSON.parse(localStorage.getItem("agendamentos") || "[]");
+    const dadosFinanceiro = JSON.parse(localStorage.getItem("financeiro") || "[]");
+    setAgendamentos(dadosAgendamentos);
+    setFinanceiro(dadosFinanceiro);
+  }, []);
+
+  const agendamentosHoje = agendamentos.length;
+  const faturamentoDia = financeiro
+    .filter(f => f.status === "Entrada")
+    .reduce((acc, curr) => acc + Number(curr.valor), 0);
+
+  const faturamentoMes = faturamentoDia * 30; // Simulação (opcional: podemos melhorar isso depois)
+  const pendenciasPagamento = financeiro.filter(f => f.status === "Saída").length;
+
   return (
-    <section className="p-6 text-[#5C4033]">
+    <section className="p-6 text-[#5C4033] min-h-screen bg-[#fffaf7]">
       <h2 className="text-2xl font-bold text-[#A06D52] mb-6">Dashboard</h2>
 
       {/* Visão Geral */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold mb-2">📊 Visão Geral</h3>
         <ul className="list-disc list-inside space-y-1">
-          <li><strong>Total de agendamentos hoje:</strong> 12</li>
-          <li><strong>Clientes atendidos no mês:</strong> 84</li>
+          <li><strong>Total de agendamentos hoje:</strong> {agendamentosHoje}</li>
+          <li><strong>Clientes atendidos no mês:</strong> {agendamentosHoje * 2}</li> {/* Exemplo, pode ajustar */}
           <li><strong>Serviços mais realizados:</strong> Escova, Manicure, Corte feminino</li>
         </ul>
       </div>
@@ -26,24 +66,14 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            <tr className="hover:bg-[#f9f1ed]">
-              <td className="p-2">09:00</td>
-              <td className="p-2">Maria Silva</td>
-              <td className="p-2">Ana Paula</td>
-              <td className="p-2">Escova</td>
-            </tr>
-            <tr className="hover:bg-[#f9f1ed]">
-              <td className="p-2">10:00</td>
-              <td className="p-2">João Costa</td>
-              <td className="p-2">Carlos Mendes</td>
-              <td className="p-2">Corte masculino</td>
-            </tr>
-            <tr className="hover:bg-[#f9f1ed]">
-              <td className="p-2">11:30</td>
-              <td className="p-2">Fernanda Lopes</td>
-              <td className="p-2">Juliana Lima</td>
-              <td className="p-2">Manicure</td>
-            </tr>
+            {agendamentos.slice(0, 3).map((item) => (
+              <tr key={item.id} className="hover:bg-[#f9f1ed]">
+                <td className="p-2">{item.hora}</td>
+                <td className="p-2">{item.cliente}</td>
+                <td className="p-2">{item.profissional}</td>
+                <td className="p-2">{item.servico}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -52,9 +82,9 @@ export default function Home() {
       <div className="mb-8">
         <h3 className="text-xl font-semibold mb-2">💰 Financeiro</h3>
         <ul className="list-disc list-inside space-y-1">
-          <li><strong>Faturamento do dia:</strong> R$ 750,00</li>
-          <li><strong>Faturamento do mês:</strong> R$ 9.340,00</li>
-          <li><strong>Pendências de pagamento:</strong> 2</li>
+          <li><strong>Faturamento do dia:</strong> R$ {faturamentoDia},00</li>
+          <li><strong>Faturamento do mês:</strong> R$ {faturamentoMes},00</li>
+          <li><strong>Pendências de pagamento:</strong> {pendenciasPagamento}</li>
         </ul>
       </div>
 

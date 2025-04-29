@@ -6,6 +6,7 @@ import Clientes from "./pages/Clientes";
 import Profissionais from "./pages/Profissionais";
 import Agendamentos from "./pages/Agendamentos";
 import Financeiro from "./pages/Financeiro";
+import ListaFinanceiro from "./pages/ListaFinanceiro";
 import Login from "./pages/Login";
 import ClientesAgendados from "./pages/ClientesAgendados";
 
@@ -32,8 +33,9 @@ function App() {
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/profissionais" element={<Profissionais />} />
           <Route path="/agendamentos" element={<Agendamentos />} />
-          <Route path="/financeiro" element={<Financeiro />} />
           <Route path="/agendamentos/clientes" element={<ClientesAgendados />} />
+          <Route path="/financeiro" element={<Financeiro />} />
+          <Route path="/financeiro/lista" element={<ListaFinanceiro />} />      
         </Routes>
       </Layout>
     </Router>
