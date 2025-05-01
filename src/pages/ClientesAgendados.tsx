@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
 
 interface Cliente {
@@ -8,12 +8,7 @@ interface Cliente {
 }
 
 export default function ClientesAgendados() {
-  const [clientes, setClientes] = useState<Cliente[]>([
-    { nome: "Ana Maria", telefone: "(11) 97654-0988", cpf: "123.456.789-00" },
-    { nome: "Joyce", telefone: "(11) 97654-0988", cpf: "123.456.789-00" },
-    { nome: "Fernanda", telefone: "(11) 97654-0988", cpf: "123.456.789-00" },
-  ]);
-
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [formData, setFormData] = useState<Cliente>({
     nome: "",
@@ -21,17 +16,60 @@ export default function ClientesAgendados() {
     cpf: "",
   });
 
+  const token = localStorage.getItem("authToken"); 
+
+  
+  const fetchClientes = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/clientes", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setClientes(data);
+    } catch (error) {
+      console.error("Erro ao carregar os clientes:", error);
+    }
+  };
+
+  
+  useEffect(() => {
+    if (token) {
+      fetchClientes();
+    }
+  }, [token]);
+
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.nome && formData.telefone && formData.cpf) {
-      setClientes(prev => [...prev, formData]);
-      setFormData({ nome: "", telefone: "", cpf: "" });
-      setMostrarModal(false);
+      try {
+        const res = await fetch("http://localhost:3000/clientes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (res.ok) {
+          setFormData({ nome: "", telefone: "", cpf: "" });
+          setMostrarModal(false);
+          fetchClientes(); 
+        } else {
+          alert("Erro ao cadastrar o cliente!");
+        }
+      } catch (error) {
+        console.error("Erro ao enviar os dados:", error);
+      }
     } else {
       alert("Preencha todos os campos!");
     }

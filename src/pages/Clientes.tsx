@@ -19,9 +19,13 @@ export default function Clientes() {
   const itensPorPagina = 5;
 
   const fetchClientes = async () => {
-    const res = await fetch("http://localhost:3000/clientes");
+    const res = await fetch("http://localhost:3000/clientes", {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
     const data = await res.json();
-    
     setClientes(data);
   };
 
@@ -38,7 +42,10 @@ export default function Clientes() {
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
       body: JSON.stringify(form),
     });
 
@@ -51,9 +58,13 @@ export default function Clientes() {
   };
 
   const confirmarExclusao = async () => {
-    alert(clienteParaExcluir?.id_cliente);  
     if (clienteParaExcluir?.id_cliente) {
-      await fetch(`http://localhost:3000/clientes/${clienteParaExcluir.id_cliente}`, { method: "DELETE" });
+      await fetch(`http://localhost:3000/clientes/${clienteParaExcluir.id_cliente}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
       setClienteParaExcluir(null);
       setModalConfirmacao(false);
       fetchClientes();
@@ -142,7 +153,7 @@ export default function Clientes() {
       </div>
 
       {modalAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0	bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
             <button
               className="absolute top-2 right-3 text-gray-600 hover:text-black text-xl"

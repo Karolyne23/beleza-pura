@@ -16,17 +16,51 @@ export default function ListaFinanceiro() {
   const [filtro, setFiltro] = useState<"Entrada" | "Saída" | "todos">("todos");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const dados = JSON.parse(localStorage.getItem("financeiro") || "[]");
-    setLista(dados);
-  }, []);
+  const token = localStorage.getItem("authToken"); 
 
-  const excluirLancamento = (id: string) => {
-    const novaLista = lista.filter(item => item.id !== id);
-    setLista(novaLista);
-    localStorage.setItem("financeiro", JSON.stringify(novaLista));
+  
+  const fetchLancamentos = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/financeiro", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setLista(data);
+    } catch (error) {
+      console.error("Erro ao carregar os lançamentos:", error);
+    }
   };
 
+  useEffect(() => {
+    if (token) {
+      fetchLancamentos();
+    }
+  }, [token]);
+
+  
+  const excluirLancamento = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:3000/financeiro/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const novaLista = lista.filter(item => item.id !== id);
+        setLista(novaLista);
+      } else {
+        alert("Erro ao excluir o lançamento!");
+      }
+    } catch (error) {
+      console.error("Erro ao excluir o lançamento:", error);
+    }
+  };
+
+  
   const filtrados = lista.filter(item =>
     filtro === "todos" ? true : item.status === filtro
   );

@@ -27,22 +27,38 @@ export default function Profissionais() {
     telefone: "",
   });
 
-  // Carrega do localStorage
-  useEffect(() => {
-    const dados = localStorage.getItem("profissionais");
-    if (dados) {
-      setProfissionais(JSON.parse(dados));
-    }
-  }, []);
+  const token = localStorage.getItem("authToken"); 
 
-  // Atualiza inputs
+  
+  const fetchProfissionais = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/profissionais", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setProfissionais(data);
+    } catch (error) {
+      console.error("Erro ao carregar os profissionais:", error);
+    }
+  };
+
+  
+  useEffect(() => {
+    if (token) {
+      fetchProfissionais();
+    }
+  }, [token]);
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Envia formulário
-  const handleSubmit = (e: React.FormEvent) => {
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const camposObrigatorios = ["nome", "email", "senha", "cargo"];
     const algumVazio = camposObrigatorios.some(campo => !(formData as any)[campo]);
@@ -52,28 +68,58 @@ export default function Profissionais() {
       return;
     }
 
-    const novaLista = [...profissionais, formData];
-    setProfissionais(novaLista);
-    localStorage.setItem("profissionais", JSON.stringify(novaLista));
-    setFormData({
-      nome: "",
-      email: "",
-      senha: "",
-      cargo: "",
-      horario: "",
-      servicos: "",
-      perfil: "",
-      telefone: "",
-    });
-    setMostrarFormulario(false);
+    try {
+      const method = formData.email ? "PATCH" : "POST"; 
+      const url = formData.email ? `http://localhost:3000/profissionais/${formData.email}` : "http://localhost:3000/profissionais";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (res.ok) {
+        setFormData({
+          nome: "",
+          email: "",
+          senha: "",
+          cargo: "",
+          horario: "",
+          servicos: "",
+          perfil: "",
+          telefone: "",
+        });
+        setMostrarFormulario(false);
+        fetchProfissionais();
+      } else {
+        alert("Erro ao salvar os dados!");
+      }
+    } catch (error) {
+      console.error("Erro ao enviar os dados:", error);
+    }
   };
 
-  // Excluir profissional
-  const handleDelete = (index: number) => {
-    const novaLista = [...profissionais];
-    novaLista.splice(index, 1);
-    setProfissionais(novaLista);
-    localStorage.setItem("profissionais", JSON.stringify(novaLista));
+  
+  const handleDelete = async (email: string) => {
+    try {
+      const res = await fetch(`http://localhost:3000/profissionais/${email}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        fetchProfissionais();
+      } else {
+        alert("Erro ao excluir profissional!");
+      }
+    } catch (error) {
+      console.error("Erro ao excluir profissional:", error);
+    }
   };
 
   return (
@@ -145,7 +191,7 @@ export default function Profissionais() {
                 </div>
               </div>
               <button
-                onClick={() => handleDelete(index)}
+                onClick={() => handleDelete(prof.email)}
                 className="text-red-600 hover:text-red-800 transition"
                 title="Excluir profissional"
               >

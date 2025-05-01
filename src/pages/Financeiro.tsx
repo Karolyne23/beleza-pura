@@ -16,14 +16,26 @@ export default function Financeiro() {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const dados = JSON.parse(localStorage.getItem("financeiro") || "[]");
-    const novo = { ...form, id: Date.now().toString() };
-    localStorage.setItem("financeiro", JSON.stringify([...dados, novo]));
+    try {
+      const response = await fetch("http://localhost:3000/financeiro", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(form)
+      });
 
-    navigate("/financeiro/lista");
+      if (response.ok) {
+        navigate("/financeiro/lista");
+      } else {
+        console.error("Erro ao salvar dados financeiros");
+      }
+    } catch (error) {
+      console.error("Erro na requisição:", error);
+    }
   };
 
   return (

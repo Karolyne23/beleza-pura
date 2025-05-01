@@ -24,19 +24,51 @@ export default function Home() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [financeiro, setFinanceiro] = useState<Financeiro[]>([]);
 
+  const token = localStorage.getItem("authToken"); 
+
+  
+  const fetchAgendamentos = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/agendamentos", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setAgendamentos(data);
+    } catch (error) {
+      console.error("Erro ao carregar agendamentos:", error);
+    }
+  };
+
+  
+  const fetchFinanceiro = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/financeiro", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setFinanceiro(data);
+    } catch (error) {
+      console.error("Erro ao carregar financeiro:", error);
+    }
+  };
+
   useEffect(() => {
-    const dadosAgendamentos = JSON.parse(localStorage.getItem("agendamentos") || "[]");
-    const dadosFinanceiro = JSON.parse(localStorage.getItem("financeiro") || "[]");
-    setAgendamentos(dadosAgendamentos);
-    setFinanceiro(dadosFinanceiro);
-  }, []);
+    if (token) {
+      fetchAgendamentos();
+      fetchFinanceiro();
+    }
+  }, [token]);
 
   const agendamentosHoje = agendamentos.length;
   const faturamentoDia = financeiro
     .filter(f => f.status === "Entrada")
     .reduce((acc, curr) => acc + Number(curr.valor), 0);
 
-  const faturamentoMes = faturamentoDia * 30; // Simulação (opcional: podemos melhorar isso depois)
+  const faturamentoMes = faturamentoDia * 30; 
   const pendenciasPagamento = financeiro.filter(f => f.status === "Saída").length;
 
   return (
