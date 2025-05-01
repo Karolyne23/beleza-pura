@@ -20,21 +20,23 @@ export default function Financeiro() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3000/financeiro", {
+      const res = await fetch("http://localhost:3000/financeiro", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify(form),
       });
 
-      if (response.ok) {
+      if (res.ok) {
         navigate("/financeiro/lista");
       } else {
-        console.error("Erro ao salvar dados financeiros");
+        alert("Erro ao salvar dados financeiros.");
       }
     } catch (error) {
-      console.error("Erro na requisição:", error);
+      console.error("Erro ao enviar dados:", error);
+      alert("Erro na requisição.");
     }
   };
 
@@ -42,15 +44,34 @@ export default function Financeiro() {
     <div className="p-6 bg-[#fffaf7] min-h-screen">
       <h2 className="text-2xl font-bold text-[#A06D52] mb-6 uppercase">Financeiro</h2>
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
-        <input name="descricao" placeholder="Descrição" value={form.descricao} onChange={handleChange} className="w-full border rounded p-2" required />
+        <input
+          name="descricao"
+          placeholder="Descrição"
+          value={form.descricao}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        />
 
-        <select name="tipo" value={form.tipo} onChange={handleChange} className="w-full border rounded p-2" required>
+        <select
+          name="tipo"
+          value={form.tipo}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        >
           <option value="">Tipo Pagamento</option>
           <option value="PIX">PIX</option>
           <option value="Cartão de Crédito">Cartão de Crédito</option>
         </select>
 
-        <select name="valor" value={form.valor} onChange={handleChange} className="w-full border rounded p-2" required>
+        <select
+          name="valor"
+          value={form.valor}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        >
           <option value="">Valor</option>
           <option value="50">R$ 50,00</option>
           <option value="70">R$ 70,00</option>
@@ -58,7 +79,13 @@ export default function Financeiro() {
           <option value="150">R$ 150,00</option>
         </select>
 
-        <select name="categoria" value={form.categoria} onChange={handleChange} className="w-full border rounded p-2" required>
+        <select
+          name="categoria"
+          value={form.categoria}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        >
           <option value="">Categoria</option>
           <option value="Corte">Corte</option>
           <option value="Tintura">Tintura</option>
@@ -66,13 +93,21 @@ export default function Financeiro() {
           <option value="Tratamento">Tratamento</option>
         </select>
 
-        <select name="status" value={form.status} onChange={handleChange} className="w-full border rounded p-2" required>
+        <select
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        >
           <option value="">Status</option>
           <option value="Entrada">Pago</option>
           <option value="Saída">Não Pago</option>
         </select>
 
-        <button type="submit" className="w-full bg-[#A06D52] text-white py-2 rounded">Salvar</button>
+        <button type="submit" className="w-full bg-[#A06D52] text-white py-2 rounded">
+          Salvar
+        </button>
       </form>
     </div>
   );

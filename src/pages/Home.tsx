@@ -24,9 +24,9 @@ export default function Home() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [financeiro, setFinanceiro] = useState<Financeiro[]>([]);
 
-  const token = localStorage.getItem("authToken"); 
+  const token = localStorage.getItem("authToken"); // Supondo que o token de autenticação esteja no localStorage
 
-  
+  // Carregar dados de agendamentos
   const fetchAgendamentos = async () => {
     try {
       const res = await fetch("http://localhost:3000/agendamentos", {
@@ -41,7 +41,7 @@ export default function Home() {
     }
   };
 
-  
+  // Carregar dados financeiros
   const fetchFinanceiro = async () => {
     try {
       const res = await fetch("http://localhost:3000/financeiro", {
@@ -68,7 +68,7 @@ export default function Home() {
     .filter(f => f.status === "Entrada")
     .reduce((acc, curr) => acc + Number(curr.valor), 0);
 
-  const faturamentoMes = faturamentoDia * 30; 
+  const faturamentoMes = faturamentoDia * 30; // Simulação (opcional: podemos melhorar isso depois)
   const pendenciasPagamento = financeiro.filter(f => f.status === "Saída").length;
 
   return (

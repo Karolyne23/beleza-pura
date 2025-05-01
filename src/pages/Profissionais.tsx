@@ -27,9 +27,9 @@ export default function Profissionais() {
     telefone: "",
   });
 
-  const token = localStorage.getItem("authToken"); 
+  const token = localStorage.getItem("authToken"); // Supondo que o token de autenticação esteja no localStorage
 
-  
+  // Carrega os profissionais
   const fetchProfissionais = async () => {
     try {
       const res = await fetch("http://localhost:3000/profissionais", {
@@ -44,20 +44,20 @@ export default function Profissionais() {
     }
   };
 
-  
+  // Carrega os dados do localStorage
   useEffect(() => {
     if (token) {
       fetchProfissionais();
     }
   }, [token]);
 
-
+  // Atualiza os inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  
+  // Envia o formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const camposObrigatorios = ["nome", "email", "senha", "cargo"];
@@ -69,7 +69,7 @@ export default function Profissionais() {
     }
 
     try {
-      const method = formData.email ? "PATCH" : "POST"; 
+      const method = formData.email ? "PATCH" : "POST"; // Se houver email, é edição, caso contrário, é novo profissional
       const url = formData.email ? `http://localhost:3000/profissionais/${formData.email}` : "http://localhost:3000/profissionais";
 
       const res = await fetch(url, {
@@ -102,7 +102,7 @@ export default function Profissionais() {
     }
   };
 
-  
+  // Excluir profissional
   const handleDelete = async (email: string) => {
     try {
       const res = await fetch(`http://localhost:3000/profissionais/${email}`, {

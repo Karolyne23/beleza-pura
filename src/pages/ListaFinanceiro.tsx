@@ -17,7 +17,6 @@ export default function ListaFinanceiro() {
   const navigate = useNavigate();
 
   const token = localStorage.getItem("authToken"); 
-
   
   const fetchLancamentos = async () => {
     try {

@@ -16,9 +16,9 @@ export default function ClientesAgendados() {
     cpf: "",
   });
 
-  const token = localStorage.getItem("authToken"); 
+  const token = localStorage.getItem("authToken"); // Supondo que o token de autenticação esteja no localStorage
 
-  
+  // Carrega os clientes
   const fetchClientes = async () => {
     try {
       const res = await fetch("http://localhost:3000/clientes", {
@@ -33,20 +33,20 @@ export default function ClientesAgendados() {
     }
   };
 
-  
+  // Carrega os dados no useEffect
   useEffect(() => {
     if (token) {
       fetchClientes();
     }
   }, [token]);
 
-  
+  // Atualiza os inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  
+  // Envia o formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.nome && formData.telefone && formData.cpf) {
@@ -63,7 +63,7 @@ export default function ClientesAgendados() {
         if (res.ok) {
           setFormData({ nome: "", telefone: "", cpf: "" });
           setMostrarModal(false);
-          fetchClientes(); 
+          fetchClientes(); // Atualiza a lista de clientes
         } else {
           alert("Erro ao cadastrar o cliente!");
         }
