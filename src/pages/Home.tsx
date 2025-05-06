@@ -1,144 +1,453 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
+import { dashboardService, DashboardData, agendamentoService, Agendamento, profissionalService, Profissional } from '../services/api';
+import { formatCurrency } from '../utils/format';
+import { FaUsers, FaClipboardList, FaUserTie, FaCalendarDay, FaUserFriends, FaCalendarAlt, FaMoneyBillWave, FaChartLine, FaExclamationCircle, FaLightbulb, FaEdit } from 'react-icons/fa';
 
-interface Agendamento {
-  id: string;
-  cliente: string;
-  servico: string;
-  valor: number;
-  data: string;
-  hora: string;
-  profissional: string;
-  status: "PENDENTE" | "CONCLUÍDO" | "CANCELADO";
-}
-
-interface Financeiro {
-  id: string;
-  descricao: string;
-  tipo: string;
-  valor: string;
-  categoria: string;
-  status: "Entrada" | "Saída";
-}
-
-export default function Home() {
-  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
-  const [financeiro, setFinanceiro] = useState<Financeiro[]>([]);
-
-  const token = localStorage.getItem("authToken"); // Supondo que o token de autenticação esteja no localStorage
-
-  // Carregar dados de agendamentos
-  const fetchAgendamentos = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/agendamentos", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      setAgendamentos(data);
-    } catch (error) {
-      console.error("Erro ao carregar agendamentos:", error);
-    }
-  };
-
-  // Carregar dados financeiros
-  const fetchFinanceiro = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/financeiro", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      setFinanceiro(data);
-    } catch (error) {
-      console.error("Erro ao carregar financeiro:", error);
-    }
-  };
+export function Home() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [todayAppointments, setTodayAppointments] = useState<Agendamento[]>([]);
+  const [nextAppointments, setNextAppointments] = useState<Agendamento[]>([]);
+  const [editingProfissional, setEditingProfissional] = useState<Profissional | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      fetchAgendamentos();
-      fetchFinanceiro();
+    const fetchData = async () => {
+      try {
+        const [dashboardData, agendamentos] = await Promise.all([
+          dashboardService.getDashboardData(),
+          agendamentoService.list()
+        ]);
+        
+        const hoje = new Date().toISOString().split('T')[0];
+        const todayData = agendamentos.filter(a => 
+          new Date(a.data_hora).toISOString().split('T')[0] === hoje
+        );
+        const nextData = agendamentos
+          .filter(a => new Date(a.data_hora) >= new Date())
+          .sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime());
+
+        setData(dashboardData);
+        setTodayAppointments(todayData);
+        setNextAppointments(nextData);
+      } catch (err) {
+        setError('Erro ao carregar dados do dashboard');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleEditProfissional = async (profissional: Profissional) => {
+    setEditingProfissional(profissional);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateProfissional = async (updatedData: Partial<Profissional>) => {
+    if (!editingProfissional?.id_profissional) return;
+
+    try {
+      await profissionalService.update(editingProfissional.id_profissional, updatedData);
+      // Refresh dashboard data
+      const newData = await dashboardService.getDashboardData();
+      setData(newData);
+      setShowEditModal(false);
+      setEditingProfissional(null);
+    } catch (error) {
+      console.error('Erro ao atualizar profissional:', error);
+      setError('Erro ao atualizar profissional');
     }
-  }, [token]);
+  };
 
-  const agendamentosHoje = agendamentos.length;
-  const faturamentoDia = financeiro
-    .filter(f => f.status === "Entrada")
-    .reduce((acc, curr) => acc + Number(curr.valor), 0);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-  const faturamentoMes = faturamentoDia * 30; // Simulação (opcional: podemos melhorar isso depois)
-  const pendenciasPagamento = financeiro.filter(f => f.status === "Saída").length;
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <section className="p-6 text-[#5C4033] min-h-screen bg-[#fffaf7]">
-      <h2 className="text-2xl font-bold text-[#A06D52] mb-6">Dashboard</h2>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
       {/* Visão Geral */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">📊 Visão Geral</h3>
-        <ul className="list-disc list-inside space-y-1">
-          <li><strong>Total de agendamentos hoje:</strong> {agendamentosHoje}</li>
-          <li><strong>Clientes atendidos no mês:</strong> {agendamentosHoje * 2}</li> {/* Exemplo, pode ajustar */}
-          <li><strong>Serviços mais realizados:</strong> Escova, Manicure, Corte feminino</li>
-        </ul>
-      </div>
+      <section className="mb-8" aria-label="Visão Geral">
+        <h2 className="text-2xl font-bold mb-4">Visão Geral</h2>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-600 font-medium">Agendamentos Hoje</p>
+                  <p className="text-2xl font-bold text-blue-700">{todayAppointments.length}</p>
+                </div>
+                <div className="bg-blue-100 p-3 rounded-full">
+                  <FaCalendarDay className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-600 font-medium">Total de Clientes</p>
+                  <p className="text-2xl font-bold text-green-700">{data?.totalClients || 0}</p>
+                </div>
+                <div className="bg-green-100 p-3 rounded-full">
+                  <FaUserFriends className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-purple-600 font-medium">Próximos Agendamentos</p>
+                  <p className="text-2xl font-bold text-purple-700">{nextAppointments.length}</p>
+                </div>
+                <div className="bg-purple-100 p-3 rounded-full">
+                  <FaCalendarAlt className="h-6 w-6 text-purple-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Próximos Agendamentos */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">📅 Próximos Agendamentos</h3>
-        <table className="w-full text-left border border-[#d5b8a3] rounded-md">
-          <thead className="bg-[#f3e5dc]">
-            <tr>
-              <th className="p-2">Horário</th>
-              <th className="p-2">Cliente</th>
-              <th className="p-2">Profissional</th>
-              <th className="p-2">Serviço</th>
-            </tr>
-          </thead>
-          <tbody>
-            {agendamentos.slice(0, 3).map((item) => (
-              <tr key={item.id} className="hover:bg-[#f9f1ed]">
-                <td className="p-2">{item.hora}</td>
-                <td className="p-2">{item.cliente}</td>
-                <td className="p-2">{item.profissional}</td>
-                <td className="p-2">{item.servico}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <section className="mb-8" aria-label="Próximos Agendamentos">
+        <h2 className="text-2xl font-bold mb-4">Próximos Agendamentos</h2>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profissional</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serviço</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {nextAppointments.map((appointment) => (
+                  <tr key={appointment.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(appointment.data_hora).toLocaleString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {appointment.cliente?.nome || 'Cliente não encontrado'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {appointment.profissional?.nome || 'Profissional não encontrado'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {appointment.servico}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        appointment.status === 'CONFIRMADO' ? 'bg-green-100 text-green-800' :
+                        appointment.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
+                        appointment.status === 'CANCELADO' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {appointment.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Agendamentos de Hoje */}
+      <section className="mb-8" aria-label="Agendamentos de Hoje">
+        <h2 className="text-2xl font-bold mb-4">Agendamentos de Hoje</h2>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profissional</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serviço</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {todayAppointments.map((appointment) => (
+                  <tr key={appointment.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(appointment.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {appointment.cliente?.nome || 'Cliente não encontrado'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {appointment.profissional?.nome || 'Profissional não encontrado'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {appointment.servico}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        appointment.status === 'CONFIRMADO' ? 'bg-green-100 text-green-800' :
+                        appointment.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
+                        appointment.status === 'CANCELADO' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {appointment.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       {/* Financeiro */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">💰 Financeiro</h3>
-        <ul className="list-disc list-inside space-y-1">
-          <li><strong>Faturamento do dia:</strong> R$ {faturamentoDia},00</li>
-          <li><strong>Faturamento do mês:</strong> R$ {faturamentoMes},00</li>
-          <li><strong>Pendências de pagamento:</strong> {pendenciasPagamento}</li>
-        </ul>
-      </div>
+      <section className="mb-8" aria-label="Financeiro">
+        <h2 className="text-2xl font-bold mb-4">Financeiro</h2>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-600 font-medium">Faturamento do dia</p>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {formatCurrency(data?.financial.dailyRevenue || 0)}
+                  </p>
+                </div>
+                <div className="bg-blue-100 p-3 rounded-full">
+                  <FaMoneyBillWave className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </div>
 
-      {/* Equipe */}
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">🧑‍💼 Equipe Hoje</h3>
-        <ul className="list-disc list-inside space-y-1">
-          <li>4 profissionais em atendimento</li>
-          <li>1 profissional em pausa</li>
-          <li>Nenhuma ausência registrada</li>
-        </ul>
-      </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-600 font-medium">Faturamento do mês</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {formatCurrency(data?.financial.monthlyRevenue || 0)}
+                  </p>
+                </div>
+                <div className="bg-green-100 p-3 rounded-full">
+                  <FaChartLine className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </div>
 
-      {/* Dicas */}
-      <div className="mb-4">
-        <h3 className="text-xl font-semibold mb-2">📌 Dicas de Gestão</h3>
-        <ul className="list-disc list-inside space-y-1">
-          <li>Ofereça promoções nas quartas-feiras (baixo movimento)</li>
-          <li>Envie lembretes automáticos para os clientes</li>
-          <li>Atualize sempre os dados dos profissionais e serviços</li>
-        </ul>
-      </div>
-    </section>
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-purple-600 font-medium">Pendências de pagamento</p>
+                  <p className="text-2xl font-bold text-purple-700">{data?.financial.pendingPayments || 0}</p>
+                </div>
+                <div className="bg-purple-100 p-3 rounded-full">
+                  <FaExclamationCircle className="h-6 w-6 text-purple-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Equipe Hoje */}
+      <section className="mb-8" aria-label="Equipe Hoje">
+        <h2 className="text-2xl font-bold mb-4">Equipe Hoje</h2>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-blue-600 font-medium">Profissionais Cadastrados</p>
+                  <p className="text-2xl font-bold text-blue-700">{data?.team.profissionais.length}</p>
+                </div>
+                <div className="bg-blue-100 p-3 rounded-full">
+                  <FaUsers className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+              <div className="mt-4 space-y-2">
+                {data?.team.profissionais.map((prof, index) => (
+                  <div key={index} className="flex items-center justify-between text-sm text-blue-700 bg-blue-100 rounded px-3 py-1">
+                    <span>{prof.nome}</span>
+                    <button
+                      onClick={() => handleEditProfissional(prof as Profissional)}
+                      className="p-1 hover:bg-blue-200 rounded-full transition-colors"
+                      title="Editar profissional"
+                    >
+                      <FaEdit className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-green-600 font-medium">Serviços Disponíveis</p>
+                  <p className="text-2xl font-bold text-green-700">{data?.team.servicosUnicos.length}</p>
+                </div>
+                <div className="bg-green-100 p-3 rounded-full">
+                  <FaClipboardList className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+              <div className="mt-4 space-y-2">
+                {data?.team.servicosUnicos.map((servico, index) => (
+                  <div key={index} className="text-sm text-green-700 bg-green-100 rounded px-3 py-1">
+                    {servico}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-purple-600 font-medium">Cargos</p>
+                  <p className="text-2xl font-bold text-purple-700">{data?.team.cargosUnicos.length}</p>
+                </div>
+                <div className="bg-purple-100 p-3 rounded-full">
+                  <FaUserTie className="h-6 w-6 text-purple-600" />
+                </div>
+              </div>
+              <div className="mt-4 space-y-2">
+                {data?.team.cargosUnicos.map((cargo, index) => (
+                  <div key={index} className="text-sm text-purple-700 bg-purple-100 rounded px-3 py-1">
+                    {cargo}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dicas de Gestão */}
+      <section className="mb-8" aria-label="Dicas de Gestão">
+        <h2 className="text-2xl font-bold mb-4">Dicas de Gestão</h2>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-blue-700">📌 Dicas de Gestão</h2>
+            <div className="bg-blue-100 p-3 rounded-full">
+              <FaLightbulb className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+          <ul className="space-y-4">
+            <li className="flex items-start">
+              <span className="mr-2 text-blue-600">•</span>
+              <span className="text-blue-700">Ofereça promoções nas quartas-feiras (baixo movimento)</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2 text-blue-600">•</span>
+              <span className="text-blue-700">Envie lembretes automáticos para os clientes</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2 text-blue-600">•</span>
+              <span className="text-blue-700">Atualize sempre os dados dos profissionais e serviços</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Modal de Edição */}
+      {showEditModal && editingProfissional && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold mb-4">Editar Profissional</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              handleUpdateProfissional({
+                nome: formData.get('nome') as string,
+                cargo: formData.get('cargo') as string,
+                servicos: formData.get('servicos')?.toString().split(',') || [],
+                horario: formData.get('horario') as string
+              });
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Nome</label>
+                  <input
+                    type="text"
+                    name="nome"
+                    defaultValue={editingProfissional.nome}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Cargo</label>
+                  <input
+                    type="text"
+                    name="cargo"
+                    defaultValue={editingProfissional.cargo}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Serviços (separados por vírgula)</label>
+                  <input
+                    type="text"
+                    name="servicos"
+                    defaultValue={editingProfissional.servicos?.join(', ')}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Horário</label>
+                  <input
+                    type="time"
+                    name="horario"
+                    defaultValue={editingProfissional.horario}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingProfissional(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

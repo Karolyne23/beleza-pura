@@ -1,14 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
-import Home from "./pages/Home";
+import { Home } from "./pages/Home";
 import Clientes from "./pages/Clientes";
 import Profissionais from "./pages/Profissionais";
 import Agendamentos from "./pages/Agendamentos";
 import Financeiro from "./pages/Financeiro";
-import ListaFinanceiro from "./pages/ListaFinanceiro";
 import Login from "./pages/Login";
-import ClientesAgendados from "./pages/ClientesAgendados";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return <>{children}</>; 
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -25,20 +38,56 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/profissionais" element={<Profissionais />} />
-          <Route path="/agendamentos" element={<Agendamentos />} />
-          <Route path="/agendamentos/clientes" element={<ClientesAgendados />} />
-          <Route path="/financeiro" element={<Financeiro />} />
-          <Route path="/financeiro/lista" element={<ListaFinanceiro />} />      
-        </Routes>
-      </Layout>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clientes"
+              element={
+                <ProtectedRoute>
+                  <Clientes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profissionais"
+              element={
+                <ProtectedRoute>
+                  <Profissionais />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/agendamentos"
+              element={
+                <ProtectedRoute>
+                  <Agendamentos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/financeiro"
+              element={
+                <ProtectedRoute>
+                  <Financeiro />
+                </ProtectedRoute>
+              }
+            />
+            
+          </Routes>
+        </Layout>
+      </Router>
+    </AuthProvider>
   );
 }
 
