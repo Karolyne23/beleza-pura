@@ -254,7 +254,7 @@ export default function Agendamentos() {
                 >
                   <option value="">Selecione um profissional</option>
                   {profissionais.map(profissional => (
-                    <option key={profissional.id} value={profissional.id}>
+                    <option key={profissional.id_profissional} value={profissional.id_profissional}>
                       {profissional.nome}
                     </option>
                   ))}
