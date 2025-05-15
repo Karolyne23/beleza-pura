@@ -58,7 +58,7 @@ export interface User {
 }
 
 export interface Cliente {
-  id: string;
+  id_cliente: string;
   nome: string;
   email: string;
   telefone: string;
@@ -74,7 +74,7 @@ export enum StatusAgendamento {
 }
 
 export interface Agendamento {
-  id: string;
+  id_agendamento: string;
   data_hora: string;
   id_cliente: string;
   id_profissional: string;
@@ -125,7 +125,7 @@ export interface MovimentacaoFinanceira {
 }
 
 export interface Financeiro {
-  id: string;
+  id_financeiro: string;
   descricao: string;
   tipo_pagamento: string;
   preco: number;
@@ -135,8 +135,8 @@ export interface Financeiro {
 }
 
 export interface CriarAgendamentoDto {
-  id_cliente: number;
-  id_profissional: number;
+  id_cliente: string;
+  id_profissional: string;
   servico: string;
   data_hora: string;
   status: string;
@@ -360,16 +360,16 @@ export const pagamentoService = {
 };
 
 export const financeiroService = {
-  create: (financeiro: Omit<Financeiro, 'id' | 'data_criacao'>) => 
+  create: (financeiro: Omit<Financeiro, 'id_financeiro' | 'data_criacao'>) => 
     api.post('/financeiro', financeiro),
   list: () => 
     api.get('/financeiro'),
   getRelatorio: () => 
     api.get('/financeiro/relatorio'),
-  update: (id: string, financeiro: Omit<Financeiro, 'id' | 'data_criacao'>) => 
+  update: (id: string, financeiro: Omit<Financeiro, 'id_financeiro' | 'data_criacao'>) => 
     api.patch(`/financeiro/${id}`, financeiro),
   delete: (id: string) => 
-    api.delete(`/financeiro?${id}`)
+    api.delete(`/financeiro/${id}`)
 };
 
 export const conciliacaoService = {
@@ -402,8 +402,13 @@ export const profissionalService = {
       const response = await api.post('/usuarios', {
         ...profissionalData,
         senha,
-        perfil: Perfil.PROFISSIONAL
-      });
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+      );
       console.log('Resposta da API:', response);
       return response.data;
     } catch (error) {

@@ -40,6 +40,12 @@ const SERVICOS = [
   "Retoque de Raiz"
 ];
 
+const PERFIS = [
+  { label: "Profissional", value: Perfil.PROFISSIONAL },
+  { label: "Administrador", value: Perfil.ADMIN },
+];
+
+
 export default function Profissionais() {
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -66,7 +72,7 @@ export default function Profissionais() {
     cargo: "",
     horario: "",
     servicos: [],
-    perfil: Perfil.PROFISSIONAL,
+    perfil: Perfil.PROFISSIONAL || Perfil.ADMIN,
     senha: ""
   });
 
@@ -136,6 +142,8 @@ export default function Profissionais() {
       console.log('Verificando token...');
       const token = localStorage.getItem('authToken');
       console.log('Token encontrado:', !!token);
+      console.log('Token usado:', token);
+
       
       if (!token) { 
         console.error('Token não encontrado');
@@ -160,10 +168,7 @@ export default function Profissionais() {
       } else {
         // Criar novo profissional
         console.log('Enviando requisição para criar profissional...');
-        await profissionalService.create({
-          ...formData,
-          perfil: Perfil.PROFISSIONAL
-        });
+        await profissionalService.create(formData);
       }
 
       setMostrarFormulario(false);
@@ -246,7 +251,7 @@ export default function Profissionais() {
               horario: "",
               servicos: [],
               perfil: Perfil.PROFISSIONAL,
-              senha: ""
+              senha: "",
             });
             setServicosSelecionados([]);
             setHorario("");
@@ -271,7 +276,7 @@ export default function Profissionais() {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center p-4 border-b">
               <h3 className="text-lg font-semibold">
-                {editingId ? 'Editar Profissional' : 'Cadastrar Profissional'}
+                {editingId ? "Editar Profissional" : "Cadastrar Profissional"}
               </h3>
               <button
                 onClick={() => {
@@ -289,7 +294,9 @@ export default function Profissionais() {
                 {/* Coluna da Esquerda */}
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nome Completo
+                    </label>
                     <input
                       type="text"
                       name="nome"
@@ -301,7 +308,9 @@ export default function Profissionais() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
                     <input
                       type="email"
                       name="email"
@@ -315,7 +324,9 @@ export default function Profissionais() {
                   {/* Campo de senha só aparece quando estiver criando um novo profissional */}
                   {!editingId && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Senha
+                      </label>
                       <input
                         type="password"
                         name="senha"
@@ -328,7 +339,9 @@ export default function Profissionais() {
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Cargo
+                    </label>
                     <select
                       name="cargo"
                       value={formData.cargo}
@@ -337,21 +350,48 @@ export default function Profissionais() {
                       required
                     >
                       <option value="">Selecione um cargo</option>
-                      {CARGOS.map(cargo => (
-                        <option key={cargo} value={cargo}>{cargo}</option>
+                      {CARGOS.map((cargo) => (
+                        <option key={cargo} value={cargo}>
+                          {cargo}
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Horário</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Perfil
+                    </label>
+                    <select
+                      name="perfil"
+                      value={formData.perfil}
+                      onChange={handleChange}
+                      className="w-full p-2 border border-[#decfc7] rounded"
+                      required
+                    >
+                      <option value="">Selecione o perfil</option>
+                      {PERFIS.map((perfil) => (
+                        <option key={perfil.value} value={perfil.value}>
+                          {perfil.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Horário
+                    </label>
                     <div className="relative">
                       <input
                         type="time"
                         value={horario}
                         onChange={(e) => {
                           setHorario(e.target.value);
-                          setFormData(prev => ({ ...prev, horario: e.target.value }));
+                          setFormData((prev) => ({
+                            ...prev,
+                            horario: e.target.value,
+                          }));
                         }}
                         className="w-full p-2 border border-[#decfc7] rounded"
                         required
@@ -364,7 +404,9 @@ export default function Profissionais() {
                 {/* Coluna da Direita */}
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Serviços</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Serviços
+                    </label>
                     <div className="space-y-3">
                       {/* Barra de pesquisa */}
                       <div className="relative">
@@ -380,7 +422,7 @@ export default function Profissionais() {
 
                       {/* Serviços selecionados */}
                       <div className="flex flex-wrap gap-2 p-2 border border-[#decfc7] rounded min-h-[60px]">
-                        {servicosSelecionados.map(servico => (
+                        {servicosSelecionados.map((servico) => (
                           <div
                             key={servico}
                             className="flex items-center gap-1 bg-[#f3e0d9] text-[#5C4033] px-2 py-1 rounded-full text-sm"
@@ -399,15 +441,15 @@ export default function Profissionais() {
 
                       {/* Lista de serviços */}
                       <div className="border border-[#decfc7] rounded max-h-[200px] overflow-y-auto">
-                        {filteredServices.map(servico => (
+                        {filteredServices.map((servico) => (
                           <button
                             key={servico}
                             type="button"
                             onClick={() => toggleServico(servico)}
                             className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-50 ${
                               servicosSelecionados.includes(servico)
-                                ? 'bg-[#A06D52] text-white hover:bg-[#8e5e41]'
-                                : 'text-gray-700'
+                                ? "bg-[#A06D52] text-white hover:bg-[#8e5e41]"
+                                : "text-gray-700"
                             }`}
                           >
                             {servico}
@@ -435,7 +477,11 @@ export default function Profissionais() {
                   disabled={loading}
                   className="px-4 py-2 bg-[#A06D52] text-white rounded hover:bg-[#8e5e41] disabled:opacity-50"
                 >
-                  {loading ? "Salvando..." : editingId ? "Atualizar" : "Cadastrar"}
+                  {loading
+                    ? "Salvando..."
+                    : editingId
+                    ? "Atualizar"
+                    : "Cadastrar"}
                 </button>
               </div>
             </form>
@@ -447,7 +493,9 @@ export default function Profissionais() {
       {loading ? (
         <div className="text-center py-4">Carregando...</div>
       ) : profissionais.length === 0 ? (
-        <p className="text-sm text-gray-500">Nenhum profissional cadastrado ainda.</p>
+        <p className="text-sm text-gray-500">
+          Nenhum profissional cadastrado ainda.
+        </p>
       ) : (
         <div className="grid gap-4">
           {profissionais.map((prof) => (
@@ -459,10 +507,12 @@ export default function Profissionais() {
                 <div className="w-10 h-10 bg-[#f3e0d9] rounded-full" />
                 <div>
                   <p className="font-semibold capitalize">{prof.nome}</p>
-                  <p className="text-sm text-[#7b5c4d] lowercase">{prof.cargo}</p>
+                  <p className="text-sm text-[#7b5c4d] lowercase">
+                    {prof.cargo}
+                  </p>
                   <p className="text-xs text-gray-500">{prof.email}</p>
                   <p className="text-xs text-gray-500">
-                    Serviços: {prof.servicos.join(', ')}
+                    Serviços: {prof.servicos.join(", ")}
                   </p>
                 </div>
               </div>

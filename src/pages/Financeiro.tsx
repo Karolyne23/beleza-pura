@@ -80,7 +80,7 @@ const Financeiro: React.FC = () => {
       status: financeiro.status,
       categoria: financeiro.categoria
     });
-    setEditingId(financeiro.id);
+    setEditingId(financeiro.id_financeiro);
     setShowModal(true);
   };
 
@@ -155,7 +155,7 @@ const Financeiro: React.FC = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {financeiros.map((financeiro) => (
-              <tr key={financeiro.id}>
+              <tr key={financeiro.id_financeiro}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {new Date(financeiro.data_criacao).toLocaleDateString('pt-BR')}
                 </td>
@@ -178,7 +178,7 @@ const Financeiro: React.FC = () => {
                     <FaEdit />
                   </button>
                   <button
-                    onClick={() => handleDelete(financeiro.id)}
+                    onClick={() => handleDelete(financeiro.id_financeiro)}
                     className="text-red-600 hover:text-red-900"
                   >
                     <FaTrash />

@@ -144,7 +144,7 @@ export function Home() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {nextAppointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-50">
+                  <tr key={appointment.id_agendamento} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(appointment.data_hora).toLocaleString('pt-BR')}
                     </td>
@@ -192,7 +192,7 @@ export function Home() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {todayAppointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-50">
+                  <tr key={appointment.id_agendamento} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(appointment.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </td>

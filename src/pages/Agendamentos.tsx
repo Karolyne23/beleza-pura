@@ -10,6 +10,10 @@ export default function Agendamentos() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [agendamentoSelecionado, setAgendamentoSelecionado] = useState<Agendamento | null>(null);
+  const [tipoPagamento, setTipoPagamento] = useState('');
+  const [valorPagoInput, setValorPagoInput] = useState<number>(0);
   const [formData, setFormData] = useState({
     id_cliente: '',
     id_profissional: '',
@@ -43,6 +47,11 @@ export default function Agendamentos() {
     }
   };
 
+  const abrirModalPagamento = (agendamento: Agendamento) => {
+  setAgendamentoSelecionado(agendamento);
+  setModalAberto(true);
+};
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -56,8 +65,8 @@ export default function Agendamentos() {
     try {
       const dataToSend = {
         ...formData,
-        id_cliente: Number(formData.id_cliente),
-        id_profissional: Number(formData.id_profissional)
+        id_cliente: formData.id_cliente,
+        id_profissional: formData.id_profissional
       };
       
       if (editingId) {
@@ -83,7 +92,7 @@ export default function Agendamentos() {
       status: agendamento.status,
       valor_servico: agendamento.valor_servico?.toString() || ''
     });
-    setEditingId(agendamento.id);
+    setEditingId(agendamento.id_agendamento);
     setShowModal(true);
   };
 
@@ -98,6 +107,50 @@ export default function Agendamentos() {
       }
     }
   };
+
+  const handleConfirmarPagamento = async () => {
+    if(!agendamentoSelecionado) return;
+
+    const { id_agendamento: id, valor_servico } = agendamentoSelecionado;
+
+    if (!id) {
+    alert("Agendamento inválido. ID não encontrado.");
+    return;
+  }
+    if (!tipoPagamento) {
+      alert('Selecione um tipo de pagamento');
+      return;
+    }
+
+  try{
+  const pagamentoPayload = {
+    valor: valor_servico, 
+    valor_pago: valorPagoInput || valor_servico,
+    id_agendamento: id,
+    tipo_pagamento: tipoPagamento,
+    data_pagamento: new Date(), 
+  };
+
+  const response = await fetch('http://localhost:3000/pagamentos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(pagamentoPayload),
+  });
+
+  if(!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Erro ao registrar pagamento");
+  }
+
+  alert('Pagamento registrado com sucesso');
+  setModalAberto(false);
+  setTipoPagamento('');
+  setValorPagoInput(0);
+  } catch (error) {
+    console.error('Erro ao registrar pagamento:', error);
+    alert(error instanceof Error ? error.message : 'Erro ao registrar pagamento. Tente novamente.');
+  }
+};
 
   const getStatusColor = (status: StatusAgendamento) => {
     const colors = {
@@ -174,7 +227,7 @@ export default function Agendamentos() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {agendamentos.map((agendamento) => (
-                  <tr key={agendamento.id} className="hover:bg-gray-50">
+                  <tr key={agendamento.id_agendamento} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(agendamento.data_hora).toLocaleString('pt-BR')}
                     </td>
@@ -193,6 +246,15 @@ export default function Agendamentos() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {agendamento.status !== StatusAgendamento.CANCELADO && (
+                        <button
+                          onClick={() => abrirModalPagamento(agendamento)}
+                          className="flex justify-center items-center gap-1"
+                          title="Registrar Pagamento"
+                        >
+                          💰
+                        </button>   
+                      )}
                       <button
                         onClick={() => handleEdit(agendamento)}
                         className="text-[#A06D52] hover:text-[#8e5e41] mr-4"
@@ -200,7 +262,7 @@ export default function Agendamentos() {
                         <FaEdit />
                       </button>
                       <button
-                        onClick={() => handleDelete(agendamento.id)}
+                        onClick={() => handleDelete(agendamento.id_agendamento)}
                         className="text-red-600 hover:text-red-900"
                       >
                         <FaTrash />
@@ -234,7 +296,7 @@ export default function Agendamentos() {
                 >
                   <option value="">Selecione um cliente</option>
                   {clientes.map(cliente => (
-                    <option key={cliente.id} value={cliente.id}>
+                    <option key={cliente.id_cliente} value={cliente.id_cliente}>
                       {cliente.nome}
                     </option>
                   ))}
@@ -336,9 +398,73 @@ export default function Agendamentos() {
                   className="px-4 py-2 bg-[#A06D52] text-white rounded hover:bg-[#8e5e41]"
                 >
                   {editingId ? 'Salvar' : 'Criar'}
+                Salvar
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {modalAberto && agendamentoSelecionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4">Registrar Pagamento</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cliente
+                </label>
+                <p className="text-gray-900">{agendamentoSelecionado.cliente?.nome}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profissional
+                </label>
+                <p className="text-gray-900">{agendamentoSelecionado.profissional?.nome}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Valor pago</label>
+                <input
+                  type="number"
+                  className="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-[#A06D52]"
+                  value={valorPagoInput}
+                  onChange={(e) => setValorPagoInput(parseFloat(e.target.value))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de Pagamento
+                </label>
+                <select
+                  value={tipoPagamento}
+                  onChange={(e) => setTipoPagamento(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A06D52] focus:border-transparent"
+                >
+                  <option value="">Selecione...</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="cartao">Cartão</option>
+                  <option value="pix">PIX</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setModalAberto(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmarPagamento}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
