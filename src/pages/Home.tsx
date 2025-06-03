@@ -223,54 +223,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* Financeiro */}
-      <section className="mb-8" aria-label="Financeiro">
-        <h2 className="text-2xl font-bold mb-4">Financeiro</h2>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">Faturamento do dia</p>
-                  <p className="text-2xl font-bold text-blue-700">
-                    {formatCurrency(data?.financial.dailyRevenue || 0)}
-                  </p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-full">
-                  <FaMoneyBillWave className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-600 font-medium">Faturamento do mês</p>
-                  <p className="text-2xl font-bold text-green-700">
-                    {formatCurrency(data?.financial.monthlyRevenue || 0)}
-                  </p>
-                </div>
-                <div className="bg-green-100 p-3 rounded-full">
-                  <FaChartLine className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-purple-600 font-medium">Pendências de pagamento</p>
-                  <p className="text-2xl font-bold text-purple-700">{data?.financial.pendingPayments || 0}</p>
-                </div>
-                <div className="bg-purple-100 p-3 rounded-full">
-                  <FaExclamationCircle className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Equipe Hoje */}
       <section className="mb-8" aria-label="Equipe Hoje">
         <h2 className="text-2xl font-bold mb-4">Equipe Hoje</h2>

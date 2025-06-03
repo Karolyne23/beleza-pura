@@ -65,26 +65,6 @@ const Dashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Faturamento Diário</p>
-              <p className="text-2xl font-bold">R$ {data.dailyRevenue.toFixed(2)}</p>
-            </div>
-            <FaMoneyBillWave className="text-green-500 text-2xl" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Faturamento Mensal</p>
-              <p className="text-2xl font-bold">R$ {data.monthlyRevenue.toFixed(2)}</p>
-            </div>
-            <FaChartLine className="text-purple-500 text-2xl" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
               <p className="text-gray-500 text-sm">Clientes do Mês</p>
               <p className="text-2xl font-bold">{data.monthlyClients}</p>
             </div>

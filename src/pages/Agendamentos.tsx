@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaUser, FaUserMd } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCalendarAlt, FaUser, FaUserMd, FaDollarSign } from 'react-icons/fa';
 import { agendamentoService, clienteService, profissionalService, Agendamento, Cliente, Profissional, StatusAgendamento } from '../services/api';
 
 export default function Agendamentos() {
@@ -62,9 +62,11 @@ export default function Agendamentos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
       const dataToSend = {
         ...formData,
+        data_hora: new Date(formData.data_hora).toISOString(),
         id_cliente: formData.id_cliente,
         id_profissional: formData.id_profissional
       };
@@ -76,9 +78,11 @@ export default function Agendamentos() {
       }
       setShowModal(false);
       setEditingId(null);
+      setError(null);
       carregarDados();
-    } catch (err) {
-      setError('Erro ao salvar agendamento');
+    } catch (err: any) {
+      const backendMessage = err.response?.data?.message;
+      alert(backendMessage || 'Erro ao salvar agendamento');
       console.error(err);
     }
   };
@@ -187,18 +191,13 @@ export default function Agendamentos() {
               });
               setEditingId(null);
               setShowModal(true);
+              setError(null);
             }}
             className="px-4 py-2 bg-[#A06D52] text-white rounded hover:bg-[#8e5e41]"
           >
             Novo Agendamento
           </button>
         </div>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
@@ -229,7 +228,8 @@ export default function Agendamentos() {
                 {agendamentos.map((agendamento) => (
                   <tr key={agendamento.id_agendamento} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(agendamento.data_hora).toLocaleString('pt-BR')}
+                      {new Date(agendamento.data_hora).toLocaleString('pt-BR', {
+                        timeZone: 'America/Sao_Paulo'})}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {agendamento.cliente?.nome || 'Cliente não encontrado'}
@@ -249,10 +249,10 @@ export default function Agendamentos() {
                       {agendamento.status !== StatusAgendamento.CANCELADO && (
                         <button
                           onClick={() => abrirModalPagamento(agendamento)}
-                          className="flex justify-center items-center gap-1"
+                          className="text-green-600 hover:text-green-800 mr-2"
                           title="Registrar Pagamento"
                         >
-                          💰
+                          <FaDollarSign />
                         </button>   
                       )}
                       <button
@@ -397,7 +397,6 @@ export default function Agendamentos() {
                   type="submit"
                   className="px-4 py-2 bg-[#A06D52] text-white rounded hover:bg-[#8e5e41]"
                 >
-                  {editingId ? 'Salvar' : 'Criar'}
                 Salvar
                 </button>
               </div>
