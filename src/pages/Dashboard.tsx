@@ -93,7 +93,6 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm ${
-                    agendamento.status === 'CONFIRMADO' ? 'bg-green-100 text-green-800' :
                     agendamento.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-red-100 text-red-800'
                   }`}>

@@ -67,10 +67,9 @@ export interface Cliente {
 }
 
 export enum StatusAgendamento {
-  PENDENTE = 'PENDENTE',
-  CONFIRMADO = 'CONFIRMADO',
-  CANCELADO = 'CANCELADO',
-  CONCLUIDO = 'CONCLUIDO'
+  PENDENTE = 'pendente',
+  CONCLUIDO = 'concluído',
+  CANCELADO = 'cancelado',
 }
 
 export interface Agendamento {
@@ -294,7 +293,7 @@ export const userService = {
 };
 
 export const clienteService = {
-  create: async (cliente: Omit<Cliente, 'id'>) => {
+  create: async (cliente: Omit<Cliente, 'id_cliente'>) => {
     const response = await api.post('/clientes', cliente);
     return response.data;
   },
@@ -329,7 +328,8 @@ export const agendamentoService = {
     return response.data;
   },
   update: async (id: string, data: CriarAgendamentoDto): Promise<Agendamento> => {
-    const response = await api.put(`/agendamento/${id}`, data);
+      console.log('Chamando PATCH para agendamento:', id);
+    const response = await api.patch(`/agendamento/${id}`, data);
     return response.data;
   },
   delete: async (id: string): Promise<void> => {
@@ -398,6 +398,11 @@ export const profissionalService = {
       const tokenData = JSON.parse(atob(token.split('.')[1]));
       console.log('Dados do token:', tokenData);
       
+      console.log("Corpo final enviado para API:", JSON.stringify({
+  ...profissionalData,
+  senha
+}, null, 2));
+
       console.log('Enviando requisição para API...');
       const response = await api.post('/usuarios', {
         ...profissionalData,

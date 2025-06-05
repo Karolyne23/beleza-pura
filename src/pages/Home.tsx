@@ -159,9 +159,8 @@ export function Home() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        appointment.status === 'CONFIRMADO' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
-                        appointment.status === 'CANCELADO' ? 'bg-red-100 text-red-800' :
+                        appointment.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
+                        appointment.status === 'cancelado' ? 'bg-red-100 text-red-800' :
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {appointment.status}
@@ -207,9 +206,8 @@ export function Home() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        appointment.status === 'CONFIRMADO' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'PENDENTE' ? 'bg-yellow-100 text-yellow-800' :
-                        appointment.status === 'CANCELADO' ? 'bg-red-100 text-red-800' :
+                        appointment.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
+                        appointment.status === 'cancelado' ? 'bg-red-100 text-red-800' :
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {appointment.status}

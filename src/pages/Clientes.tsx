@@ -39,10 +39,10 @@ export default function Clientes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (clienteSelecionado) {
-        await clienteService.update(clienteSelecionado.id, formData);
+      if (formData.id_cliente) {
+        await clienteService.update(formData.id_cliente, formData);
       } else {
-        await clienteService.create(formData as Omit<Cliente, 'id'>);
+        await clienteService.create(formData as Omit<Cliente, 'id_cliente'>);
       }
       setMostrarModal(false);
       setClienteSelecionado(null);
@@ -139,7 +139,7 @@ export default function Clientes() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedClientes.map((cliente) => (
-                <tr key={cliente.id} className="hover:bg-gray-50">
+                <tr key={cliente.id_cliente} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{cliente.nome}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cliente.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cliente.cpf}</td>
@@ -155,7 +155,7 @@ export default function Clientes() {
                       <FaEdit />
                     </button>
                     <button
-                      onClick={() => handleDelete(cliente.id)}
+                      onClick={() => handleDelete(cliente.id_cliente)}
                       className="text-red-600 hover:text-red-900"
                     >
                       <FaTrash />

@@ -16,6 +16,10 @@ const Financeiro: React.FC = () => {
     status: 'PENDENTE' as 'PENDENTE' | 'PAGO' | 'CANCELADO',
     categoria: ''
   });
+  const [relatorio, setRelatorio] = useState<{ totalEntrada: number; totalSaida: number }>({
+  totalEntrada: 0,
+  totalSaida: 0,
+  });
 
   const carregarDados = async () => {
     try {
@@ -31,9 +35,34 @@ const Financeiro: React.FC = () => {
     }
   };
 
+  const atualizarTudo = async () => {
+  try {
+    await carregarDados();
+    const relatorioResponse = await financeiroService.getRelatorio();
+    setRelatorio(relatorioResponse.data);
+  } catch (err) {
+    console.error('Erro ao atualizar dados financeiros:', err);
+    setError('Erro ao atualizar dados financeiros');
+  }
+};
+
+
   useEffect(() => {
-    carregarDados();
-  }, []);
+  const carregarTudo = async () => {
+    try {
+      await carregarDados();
+
+      const relatorioResponse = await financeiroService.getRelatorio();
+      console.log('Relatório recebido:', relatorioResponse.data);
+      setRelatorio(relatorioResponse.data);
+    } catch (err) {
+      console.error('Erro ao carregar relatório financeiro:', err);
+      setError('Erro ao carregar relatório financeiro');
+    }
+  };
+
+  carregarTudo();
+}, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -57,6 +86,7 @@ const Financeiro: React.FC = () => {
           preco: Number(formData.preco)
         });
       }
+      await atualizarTudo();
       setShowModal(false);
       setEditingId(null);
       setFormData({
@@ -66,7 +96,6 @@ const Financeiro: React.FC = () => {
         status: 'PENDENTE',
         categoria: ''
       });
-      carregarDados();
     } catch (err) {
       setError('Erro ao salvar movimentação');
     }
@@ -88,7 +117,7 @@ const Financeiro: React.FC = () => {
     if (window.confirm('Tem certeza que deseja excluir esta movimentação?')) {
       try {
         await financeiroService.delete(id);
-        carregarDados();
+        await atualizarTudo();
       } catch (err) {
         setError('Erro ao excluir movimentação');
       }
@@ -104,8 +133,14 @@ const Financeiro: React.FC = () => {
     return colors[status];
   };
 
+  const total = financeiros.reduce((acc, mov) => {
+  const preco = parseFloat(mov.preco.toString());
+  return mov.categoria === 'saida' ? acc - preco : acc + preco;
+}, 0);
+
   if (loading) {
     return (
+      console.log("Renderizando componente Financeiro com totais"),
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
@@ -154,7 +189,10 @@ const Financeiro: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {financeiros.map((financeiro) => (
+            {financeiros.map((financeiro) => {
+                console.log('Categoria detectada:', financeiro.categoria);
+
+                return (
               <tr key={financeiro.id_financeiro}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {new Date(financeiro.data_criacao).toLocaleDateString('pt-BR')}
@@ -163,7 +201,11 @@ const Financeiro: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{financeiro.categoria}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{financeiro.tipo_pagamento}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  R$ {Number(financeiro.preco).toFixed(2)}
+                  {financeiro.categoria === 'saida' ? '-' : ''}
+                  {Number(financeiro.preco).toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                  })}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(financeiro.status)}`}>
@@ -185,7 +227,8 @@ const Financeiro: React.FC = () => {
                   </button>
                 </td>
               </tr>
-            ))}
+            );
+            })}
             {financeiros.length === 0 && (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-gray-400">Nenhuma movimentação encontrada.</td>
@@ -194,6 +237,29 @@ const Financeiro: React.FC = () => {
           </tbody>
         </table>
       </div>
+      <div className="flex justify-end mt-4 text-xl font-semibold text-gray-700">
+        Total:{' '}
+        <span className={`${total < 0 ? 'text-red-600' : 'text-green-600'} ml-2`}>
+          {total.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+          })}
+        </span>
+      </div>
+      <div className="mt-6 text-right space-y-1">
+      <div className="text-green-600 font-semibold">
+        Entradas: {Number(relatorio.totalEntrada ?? 0).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        })}
+      </div>
+      <div className="text-red-600 font-semibold">
+        Saídas: -{Number(relatorio.totalSaida ?? 0).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        })}
+      </div>
+    </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
